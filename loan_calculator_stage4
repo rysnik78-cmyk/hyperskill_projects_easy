@@ -1,0 +1,140 @@
+import argparse
+import math
+
+# function here
+def calculate_principal(n, a, i):
+    p = a / ((i * (1 + i)**n)/((1+i)**n-1))
+    overpayment = math.ceil(a * n - p)
+    return f'Your loan principal = {int(p)}!\nOverpayment = {overpayment}'
+
+def calculate_periods(p, a, i):
+    n = math.ceil(math.log(a/(a - i * p), 1 + i))
+    overpayment = math.ceil(a * n - p)
+    if n % 12 == 0:
+        months = f''
+    elif n % 12 == 1:
+        months = 'and 1 month '
+    else:
+        months = f'and {n % 12} months '
+    if n // 12 == 0:
+        years = ""
+    elif n // 12 == 1:
+        years = '1 year'
+    else:
+        years = f'{n // 12} years'
+
+    return f'It will take {years} {months}to repay this loan!\nOverpayment = {overpayment}'
+
+
+def calculate_payment(t, p, n, i):
+    list_of_payments = []
+    if t == 'annuity':
+        a = math.ceil(p * i * (1 + i)**n /((1+i)**n-1))
+        overpayment = math.ceil(a * n - p)
+        return f'Your annuity payment = {a}!\nOverpayment = {overpayment}'
+    else: # diff
+        list_of_payments_string = []
+        sum_of_d = 0
+        for m in range(1, n + 1):
+            d = math.ceil(p / n + i * (p - p * (m -1) / n))
+            sum_of_d += d
+            list_of_payments += f'Month {m}: payment is {d}\n'
+            list_of_payments_string = "".join(list_of_payments)
+
+        overpayment = math.ceil(sum_of_d - p)
+        return f'{list_of_payments_string}\nOverpayment = {overpayment}'
+
+
+
+
+# Write your parser here
+parser = argparse.ArgumentParser(description="Let's compute all the parameters of the loan.")
+parser.add_argument('--payment', help="Write the payment amount. It can be calculated using the provided principal, interest, and number of months")
+parser.add_argument('--principal', help="You can get its value if you know the interest, annuity payment, and number of months.")
+parser.add_argument('--periods', help="Write the number of months needed to repay the loan. It's calculated based on the interest, annuity payment, and principal.")
+parser.add_argument('--interest', help="Interest is specified without a percent sign. Note that it can accept a floating-point value. Our loan calculator can't calculate the interest, so it must always be provided.")
+parser.add_argument('--type', help='The --type argument is indicating the type of payment: "annuity" or "diff" (differentiated). It must always be provided in')
+
+incorrect_parameters = False
+principal = 0
+periods = 0
+payment = 0
+type = None
+parameters_to_parse = 4
+interest_m = 0
+
+while True:
+    try:
+        args = parser.parse_args()
+    except SystemExit:
+        incorrect_parameters = True
+        break
+
+    if args.type is not None:
+        type = args.type
+        parameters_to_parse -= 1
+
+    else:
+        incorrect_parameters = True
+        break
+
+    if type != 'diff' and type != 'annuity':
+        incorrect_parameters = True
+
+    if args.principal is not None:
+        principal = float(args.principal)
+        parameters_to_parse -= 1
+        if principal < 0:
+            incorrect_parameters = True
+            break
+
+    if args.periods is not None:
+        periods = int(args.periods)
+        parameters_to_parse -= 1
+        if periods < 0:
+            incorrect_parameters = True
+            break
+
+    if args.payment is not None:
+        payment = float(args.payment)
+        parameters_to_parse -= 1
+        if payment < 0:
+            incorrect_parameters = True
+            break
+
+    if type == 'diff' and payment != 0:
+        incorrect_parameters = True
+        break
+
+    if args.interest is not None:
+        interest_m = float(args.interest) / 12 / 100
+        parameters_to_parse -= 1
+        if interest_m < 0:
+            incorrect_parameters = True
+            break
+    else:
+        incorrect_parameters = True
+    if parameters_to_parse > 0:
+        incorrect_parameters = True
+    break
+pass
+
+if incorrect_parameters:
+    print('Incorrect parameters.')
+else:
+    if not principal:
+        print(calculate_principal(periods, payment, interest_m))
+
+    if not periods:
+        print(calculate_periods(principal, payment, interest_m))
+
+    if not payment:
+        print(calculate_payment(type, principal, periods, interest_m))
+
+
+
+
+
+
+
+
